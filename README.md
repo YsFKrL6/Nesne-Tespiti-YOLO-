@@ -192,7 +192,7 @@ Bu arayüz, modelin kullanıcı açısından erişilebilir hâle getirilmesini v
 Modelin veri seti dışındaki gerçek dünya koşullarındaki performansını ve sınırlarını ölçmek amacıyla farklı ışık, yansıma, açı ve kapanma koşullarında çekilen 5 gerçek fotoğraf Gradio web arayüzünde test edilmiştir:
 
 | Fotoğraf | Çekim Koşulu | Gerçekteki Nesneler |
-| :--- | :--- | :--- | :--- | :--- |
+| :--- | :--- |  :--- |
 | **1. Durak Camı Yansıması (`01.jpg`)** | Gün ışığı, cam yüzey yansıması ve arka plan örtüşmesi | Yansımadaki insan, arka plandaki otomobiller | 
 | **2. Gece Liman ve Tekneler (`02.jpg`)** | Gece düşük ışık, mavi yapay aydınlatma ve bitişik tekneler | Tekneler | 
 | **3. Sahil Masa Düzeni (`03.jpg`)** | ışık, ağaç gövdesi arkası kapanma | Masa, Sandalyeler |
