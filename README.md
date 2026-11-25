@@ -1,34 +1,34 @@
 # YOLO11s ile Çok Sınıflı Nesne Tespiti (PASCAL VOC)
 
-Bilgisayarlı görü dersi ödevi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını konumlarıyla birlikte tespit eden (Object Detection) bir derin öğrenme modeli geliştirdim. Eğittiğim modeli eğitim sürecinde hiç görmediği bağımsız test verileriyle değerlendirdikten sonra, kullanıcıların kendi fotoğraflarını yükleyip anlık tespit alabilmesi için **Gradio** tabanlı etkileşimli bir web uygulamasına dönüştürdüm.
+Derin öğrenme dersi ödevi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirdim. Eğittiğim modeli eğitim sürecinde hiç görmediği bağımsız test verileriyle değerlendirdikten sonra, kullanıcıların kendi fotoğraflarını yükleyip anlık tespit alabilmesi için **Gradio** tabanlı etkileşimli bir web uygulamasına dönüştürdüm.
 
 ---
 
 ## Proje Raporu Özeti
 
-| Alan | Açıklama / Öğrenci Yanıtı |
+| Alan | Açıklama |
 | :--- | :--- |
 | **Proje Başlığı** | YOLO11s ile PASCAL VOC Veri Seti Üzerinde Çok Sınıflı Nesne Tespiti |
-| **Problem Türü / Görev** | Nesne Tespiti (Object Detection — 20 Sınıf) |
+| **Problem Türü** | Nesne Tespiti (Object Detection — 20 Sınıf) |
 | **Veri Seti** | PASCAL VOC 2007 + 2012 Birleşik Veri Seti (Toplam 21.503 görüntü: 15.052 Eğitim, 3.225 Doğrulama, 3.226 Test) |
 | **Veri Seti Kaynağı** | http://host.robots.ox.ac.uk/pascal/VOC/ |
-| **Model Mimarisi** | YOLO11s (100 katman, 9.420.540 parametre, 21.5 GFLOPs) |
+| **Model Mimarisi** | YOLO11 |
 | **Giriş Görüntü Boyutu** | 640 × 640 piksel |
 | **Hiperparametreler** | 20 Epoch, Batch Size: 32, Başlangıç Öğrenme Oranı: 0.001, Early Stopping: 8 Epoch, Kayıt Periyodu: 5 Epoch |
 | **Optimizasyon Algoritması** | AdamW |
 | **Aktivasyon Fonksiyonları** | Gizli katmanlarda **SiLU**, sınıf olasılık çıkışlarında **Sigmoid** |
 | **Kayıp (Loss) Fonksiyonları** | **CIoU Loss** + **DFL** (kutu konumlandırma) ve **BCE Loss** (sınıflandırma) |
 | **Değerlendirme Metrikleri** | IoU, Precision, Recall, mAP@0.5, mAP@0.5:0.95, Eğitim Süresi, Tahmin Süresi (ms) |
-| **Eğitim Ortamı** | Google Colab — NVIDIA Tesla T4 GPU (15 GB VRAM, 12.7 GB Sistem RAM), PyTorch & Ultralytics |
+| **Eğitim Ortamı** | Google Colab — NVIDIA Tesla T4 GPU, PyTorch & Ultralytics |
 | **En İyi Test Performansı** | Test mAP@0.5: **0.8157**, mAP@0.5:0.95: **0.6274**, Precision: **0.8248**, Recall: **0.7373** *(Eğitim Süresi: 85.50 dk)* |
-| **Tahmin Hızı (Inference)** | **6.55 ms** / görüntü (~152 FPS) |
-| **Uygulama (Deployment)** | Gradio Web Arayüzü |
+| **Tahmin Hızı (Inference)** | **6.55 ms** / görüntü |
+| **Uygulama** | Gradio Web Arayüzü |
 
 ---
 
 ## 1. Ödevin Amacı ve Seçilen Görev
 
-Bu çalışmada, günlük yaşam sahnelerindeki birden fazla nesneyi hem sınıflandırabilen hem de görüntü üzerindeki koordinatlarını sınırlayıcı kutularla (bounding box) işaretleyebilen uçtan uca bir bilgisayarlı görü sistemi geliştirdim. Görüntü sınıflandırma yalnızca tek bir baskın etiketi verirken, **Nesne Tespiti (Object Detection)** yaklaşımı tek bir karedeki farklı boyut, açı ve konumlardaki çok sayıda nesneyi aynı anda tespit edebildiği için problem türü olarak bu görevi seçtim.
+Bu çalışmada, günlük yaşam sahnelerindeki birden fazla nesneyi hem sınıflandırabilen hem de görüntü üzerindeki koordinatlarını sınırlayıcı kutularla işaretleyebilen uçtan uca bir bilgisayarlı görü sistemi geliştirdim. Görüntü sınıflandırma yalnızca tek bir baskın etiketi verirken, **Nesne Tespiti (Object Detection)** yaklaşımı tek bir karedeki farklı boyut, açı ve konumlardaki çok sayıda nesneyi aynı anda tespit edebildiği için problem türü olarak bu görevi seçtim.
 
 ---
 
@@ -37,10 +37,9 @@ Bu çalışmada, günlük yaşam sahnelerindeki birden fazla nesneyi hem sınıf
 Model eğitiminde nesne tespiti literatüründe standart ölçüt kabul edilen **PASCAL VOC 2007 ve 2012** birleşik veri setini kullandım. Veri seti toplam **21.503 görüntü** ve günlük hayattan **20 farklı nesne sınıfı** içermektedir:
 * **Taşıtlar:** Uçak (`aeroplane`), bisiklet (`bicycle`), tekne (`boat`), otobüs (`bus`), otomobil (`car`), motosiklet (`motorbike`), tren (`train`)
 * **Canlılar:** Kuş (`bird`), kedi (`cat`), inek (`cow`), köpek (`dog`), at (`horse`), insan (`person`), koyun (`sheep`)
-* **İç Mekân ve Günlük Nesneler:** Şişe (`bottle`), sandalye (`chair`), yemek masası (`diningtable`), saksı bitkisi (`pottedplant`), koltuk (`sofa`), televizyon/monitör (`tvmonitor`)
+* **İç Mekân ve Günlük Nesneler:** Şişe (`bottle`), sandalye (`chair`), yemek masası (`diningtable`), saksı bitkisi (`pottedplant`), koltuk (`sofa`), televizyon (`tvmonitor`)
 
 ### Ön İşleme ve Veri Sızıntısını (Data Leakage) Önleme Stratejisi
-* **Etiket Dönüşümü:** PASCAL VOC veri setinde orijinal olarak XML formatında bulunan nesne koordinatları, görüntü genişliği ve yüksekliğine göre 0–1 aralığında normalize edilerek YOLO formatına dönüştürülmüştür.
 * **Bağımsız Bölme Yapısı:** Aynı görüntünün eğitim ve test kümelerine birlikte düşerek yapay bir başarı skoru oluşturmasını (data leakage) önlemek amacıyla tüm görüntü-etiket çiftleri sabit bir rastgelelik tohumu (seed) ile karıştırılarak üç bağımsız kümeye ayrılmıştır:
   * **Eğitim Kümesi (Train — %70):** 15.052 görüntü
   * **Doğrulama Kümesi (Validation — %15):** 3.225 görüntü
