@@ -2,9 +2,9 @@
 
 ## Proje Özeti
 
-Derin Öğrenme dersi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını görüntüler üzerinde konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirdim. YOLO11s mimarisiyle eğittiğim modeli doğrulama ve bağımsız test verileri üzerinde değerlendirdim. Ayrıca eğitilen modeli, kullanıcıların fotoğraf yükleyerek nesne tespiti yapabilmesini sağlayan Gradio tabanlı etkileşimli bir web uygulamasına entegre ettim.
+Derin Öğrenme dersi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını görüntüler üzerinde konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirildi. YOLO11s mimarisiyle eğitilen modeli doğrulama ve bağımsız test veriler üzerinde değerlendirildi. Ayrıca eğitilen modeli, kullanıcıların fotoğraf yükleyerek nesne tespiti yapabilmesini sağlayan Gradio tabanlı etkileşimli bir web uygulaması yapıldı.
 
-Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, gerçek dünya görüntüleri üzerinde test ve kullanıcı arayüzü geliştirme aşamalarını gerçekleştirdim.
+Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, gerçek dünya görüntüleri üzerinde test ve kullanıcı arayüzü geliştirme aşamaları gerçekleştirildi.
 
 ---
 
@@ -75,7 +75,7 @@ Veri seti, eğitim sürecinde kullanılacak görüntüler ile modelin değerlend
 
 Veri bölme işleminde sabit bir rastgelelik tohumu kullanılarak tekrarlanabilirlik hedeflenmiştir. Görüntü ve etiket eşleşmelerinin korunmasına dikkat edilmiştir.
 
-Test kümesi, eğitim sırasında ağırlık güncellemek veya hiperparametre seçmek için kullanılmamalıdır. Nihai performans, model ve ayarlar belirlendikten sonra bu küme üzerinde ölçülmelidir. Aynı görüntülerin farklı kümelerde bulunması ve yinelenen görüntüler gibi olası veri sızıntısı kaynakları da kontrol edilmelidir.
+Test kümesi, eğitim sırasında ağırlık güncellemek veya hiperparametre seçmek için kullanılmamış. Nihai performans, model ve ayarlar belirlendikten sonra bu küme üzerinde ölçülmüştür.
 
 ## 3. Model Mimarisi ve Eğitim Ayarları
 
@@ -153,9 +153,9 @@ Test sonuçları, modelin farklı nesne sınıflarını tespit edebildiğini gö
 6,55 ms/görüntü değeri yaklaşık 152 görüntü/saniye hızına karşılık gelir. Ancak bu dönüşüm yalnızca ölçülen süreye dayalı teorik bir hızdır. Gerçek zamanlı performans iddiası için ön işleme, veri aktarımı, son işleme ve donanım koşullarının da hesaba katılması gerekir.
 
 
-### 4.4. Sınıf bazlı sonuçlar
+### 4.3. Sınıf bazlı sonuçlar
 
-Proje kayıtlarında bazı sınıflar için aşağıdaki mAP@0.5 değerleri bildirilmiştir:
+Bazı sınıflar için aşağıdaki mAP@0.5 değerleri bildirilmiştir:
 
 | Sınıf | Bildirilen mAP@0.5 |
 |---|---:|
@@ -187,40 +187,30 @@ Arayüzdeki güven eşiği 0,10 ile 0,90 arasında ayarlanabilir. Daha düşük 
 
 Bu arayüz, modelin kullanıcı açısından erişilebilir hâle getirilmesini ve farklı görüntüler üzerinde deneysel olarak test edilmesini sağlamaktadır.
 
-## 6. Gerçek Dünya Görüntüleriyle Test ve Hata Analizi
+## 6. Gerçek Görüntülerle Test ve Hata Analizi
 
-Modelin eğitim veri seti dışındaki görüntülerde nasıl davrandığını incelemek amacıyla farklı ışık, açı, yansıma ve örtülme koşullarında fotoğraf testleri gerçekleştirilmiştir.
+Modelin veri seti dışındaki gerçek dünya koşullarındaki performansını ve sınırlarını ölçmek amacıyla farklı ışık, yansıma, açı ve kapanma koşullarında çekilen 5 gerçek fotoğraf Gradio web arayüzünde test edilmiştir:
 
-| Test görüntüsü | Koşullar | Gözlemlenen sonuç |
-|---|---|---|
-| Durak camı yansıması (`01.jpg`) | Cam yansıması, arka plan örtüşmesi | İnsan ve otomobil tespitleri elde edilmiştir. Yansıma koşullarında bazı güven skorları düşük kalmıştır. |
-| Gündüz trafik (`13.jpg`) | Gün ışığı, birden fazla araç | Görüntüdeki bazı otomobiller yüksek güven skorlarıyla tespit edilmiştir. |
-| Sahil ve vapur (`03.jpg`) | Açık hava, insanlar ve deniz aracı | İnsanlar ve vapur için tespitler elde edilmiştir. |
-| Havalimanı apronu (`06.jpg`) | Uzak nesneler, farklı nesne boyutları | Uçak ve yer hizmet aracı için tespitler elde edilmiştir; uzak nesnelerde performans değişmiştir. |
-| Sahil masa düzeni (`10.jpg`) | Alacakaranlık, kısmi örtülme | Masa ve sandalyeler tespit edilmiş, örtülen bazı kişiler kaçırılmıştır. |
-| Gece motosiklet (`08.jpg`) | Yapay ışık, engel | Motosiklet tespit edilmiştir. |
-| Asfalt üzerinde karga (`17.jpg`) | Tepeden bakış, düşük kontrast | Varsayılan eşikte tespit elde edilememiş; eşik düşürüldüğünde yanlış sınıflandırma görülmüştür. |
-| Gece meydan (`gece_meydan.jpg`) | Düşük ışık, kalabalık, hareket bulanıklığı | Bazı insanlar ve araçlar tespit edilmiş; uzak veya bulanık nesnelerde başarı düşmüştür. |
+| Fotoğraf | Çekim Koşulu | Gerçekteki Nesneler |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Durak Camı Yansıması (`01.jpg`)** | Gün ışığı, cam yüzey yansıması ve arka plan örtüşmesi | Yansımadaki insan, arka plandaki otomobiller | 
+| **2. Gece Liman ve Tekneler (`02.jpg`)** | Gece düşük ışık, mavi yapay aydınlatma ve bitişik tekneler | Tekneler | 
+| **3. Sahil Masa Düzeni (`03.jpg`)** | ışık, ağaç gövdesi arkası kapanma | Masa, Sandalyeler |
+| **4. Havalimanı  (`04.jpg`)** | Gün ışığı, yakın plan kanat ve uzak mesafe nesneler | Uçaklar | 
+| **5. Gece Motosiklet ve Bitki (`05.jpg`)** | Gece yapay sokak aydınlatması, ön tekerde trafik dubası engeli | Motosiklet, Küçük bitki |
 
-### 6.1. Başarılı sonuçların değerlendirilmesi
+### Başarısız Durumların Değerlendirmesi
 
-Görüntülerde arka plandan belirgin biçimde ayrılan ve yeterli boyutta görünen bazı nesneler başarılı şekilde tespit edilmiştir. Bu durum, modelin eğitim sırasında öğrendiği görsel özellikleri farklı görüntülere uygulayabildiğini göstermektedir.
+- **Hata Yaptığı Durumlar:**
+  - **Kapanma ve Düşük Kontrast (`03.jpg`):** Sahil düzeninde masa ve dört sandalye tespit edilmesine rağmen, en sağdaki sandalyede oturan kişi ağaç gövdesi ve yaprakların oluşturduğu kısmi kapanma ile düşük arka plan kontrastı nedeniyle tespit edilememiştir.
+  - **Düşük Işıkta Kutu Birleşmesi (`02.jpg`):** Gece liman görüntüsünde yan yana demirli iki tekne olarak doğru sınıflandırılmış, ancak düşük ışık ve koyu gövde sınırları nedeniyle iki ayrı nesne yerine tek bir sınırlayıcı kutu içinde birleştirilmiştir.
+  - **Ölçek ve Kısmi Görünüm Farkları (`04.jpg`):** Aprondaki yolcu uçağı başarıyla tespit edilirken, kadrajın solundaki küçük ölçekli yer hizmet aracı eşik değerinin altında kalmış ve ön planda yalnızca kanat kısmı görünen yakın uçak bütüncül silüet eksikliği nedeniyle etiketlenmemiştir.
+  - **Sınıf Benzerliği (`05.jpg`):** Sol tarafta doğrudan toprağa dikili küçük palmiye bitkisi, görsel form benzerliği nedeniyle saksı bitkisi sınıfına atanmıştır.
 
-### 6.2. Hatalı sonuçların değerlendirilmesi
-
-Testlerde karşılaşılan temel sorunlar şunlardır:
-
-- **Yansıma:** Cam yüzeylerde oluşan yansımalar, nesnelerin görünümünü değiştirebilir ve modelin güven skorlarını etkileyebilir.
-- **Küçük nesneler:** Görüntüde az sayıda piksel kaplayan nesnelerin ayırt edilmesi zorlaşabilir.
-- **Örtülme (occlusion):** Bir nesnenin başka bir nesne tarafından kısmen kapatılması, tespit başarısını düşürebilir.
-- **Düşük ışık:** Gece çekimlerinde ayrıntıların kaybolması ve görüntü gürültüsü tespitleri etkileyebilir.
-
-Bu örnekler, yalnızca genel performans metriklerine bakmanın yeterli olmadığını; modelin hangi koşullarda hata yaptığının da incelenmesi gerektiğini göstermektedir.
-
-Gerçek dünya testleri, bağımsız test kümesi değerlendirmesinden ayrı bir nitel değerlendirme olarak ele alınmıştır. Bu fotoğraflardan elde edilen gözlemler, tek başına yeni bir genel doğruluk oranı hesaplamak için yeterli değildir.
+---
 
 
-## 8. GitHub Depo İçeriği
+## 7. GitHub Depo İçeriği
 
 Proje deposunda aşağıdaki dosyalar yer almaktadır:
 
