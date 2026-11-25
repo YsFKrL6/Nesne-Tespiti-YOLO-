@@ -2,7 +2,7 @@
 
 ## Proje Özeti
 
-Derin Öğrenme dersi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını görüntüler üzerinde konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirildi. YOLO11s mimarisiyle eğitilen modeli doğrulama ve bağımsız test veriler üzerinde değerlendirildi. Ayrıca eğitilen modeli, kullanıcıların fotoğraf yükleyerek nesne tespiti yapabilmesini sağlayan Gradio tabanlı etkileşimli bir web uygulaması yapıldı.
+Derin Öğrenme dersi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını görüntüler üzerinde konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirildi. YOLO11s mimarisiyle eğitilen model, doğrulama ve bağımsız test verileri üzerinde değerlendirildi. Ayrıca eğitilen modeli, kullanıcıların fotoğraf yükleyerek nesne tespiti yapabilmesini sağlayan Gradio tabanlı etkileşimli bir web uygulaması yapıldı.
 
 Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, gerçek dünya görüntüleri üzerinde test ve kullanıcı arayüzü geliştirme aşamaları gerçekleştirildi.
 
@@ -75,7 +75,7 @@ Veri seti, eğitim sürecinde kullanılacak görüntüler ile modelin değerlend
 
 Veri bölme işleminde sabit bir rastgelelik tohumu kullanılarak tekrarlanabilirlik hedeflenmiştir. Görüntü ve etiket eşleşmelerinin korunmasına dikkat edilmiştir.
 
-Test kümesi, eğitim sırasında ağırlık güncellemek veya hiperparametre seçmek için kullanılmamış. Nihai performans, model ve ayarlar belirlendikten sonra bu küme üzerinde ölçülmüştür.
+Test kümesi, eğitim sırasında ağırlık güncellemek veya hiperparametre seçmek için kullanılmamıştır. Nihai performans, model ve ayarlar belirlendikten sonra bu küme üzerinde ölçülmüştür.
 
 ## 3. Model Mimarisi ve Eğitim Ayarları
 
