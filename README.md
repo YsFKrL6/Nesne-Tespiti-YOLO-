@@ -13,7 +13,7 @@ Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, 
 | Alan | Açıklama |
 |---|---|
 | Proje başlığı | YOLO11s ile PASCAL VOC Üzerinde Çok Sınıflı Nesne Tespiti |
-| Problem türü | Nesne tespiti (Object Detection) |
+| Problem türü | Nesne tespiti |
 | Veri seti | PASCAL VOC 2007 ve 2012 |
 | Toplam görüntü | 21.503 |
 | Eğitim / doğrulama / test | 15.052 / 3.225 / 3.226 |
@@ -33,7 +33,6 @@ Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, 
 | Test Recall | 0,7373 |
 | Tahmin süresi | 6,55 ms/görüntü |
 
-*Not: Tablodaki veri sayıları ve performans değerleri proje kayıtlarından alınmıştır. Nihai raporda kullanılmadan önce eğitim günlükleri ve test çıktılarıyla doğrulanmalıdır.*
 
 ---
 
@@ -41,7 +40,7 @@ Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, 
 
 Bu projenin amacı, günlük yaşam görüntülerinde bulunan birden fazla nesneyi aynı anda tespit edebilen bir bilgisayarlı görü sistemi geliştirmektir.
 
-Görüntü sınıflandırma, bir görüntünün hangi sınıfa ait olduğunu belirlemeye odaklanırken nesne tespiti, görüntüde bulunan nesnelerin sınıflarını ve konumlarını belirler. Bu nedenle proje kapsamında, aynı görüntüde farklı nesneleri tespit edebilen ve nesnelerin çevresine sınırlayıcı kutular (bounding boxes) çizebilen nesne tespiti problemi ele alınmıştır.
+Görüntü sınıflandırma, bir görüntünün hangi sınıfa ait olduğunu belirlemeye odaklanırken nesne tespiti, görüntüde bulunan nesnelerin sınıflarını ve konumlarını belirler. Bu nedenle proje kapsamında, aynı görüntüde farklı nesneleri tespit edebilen ve nesnelerin çevresine sınırlayıcı kutular çizebilen nesne tespiti problemi ele alınmıştır.
 
 Projenin temel hedefleri şunlardır:
 
@@ -118,7 +117,6 @@ YOLO11s mimarisinde kullanılan temel bileşenler şunlardır:
 
 Bu bileşenler birlikte, nesne konumlarının ve sınıflandırma sonuçlarının iyileştirilmesine katkı sağlar.
 
-*Not: Bu bölümdeki optimizer, öğrenme oranı, kayıp bileşenleri ve ağırlık başlatma yöntemi, kullanılan Ultralytics sürümü ve gerçek eğitim yapılandırması üzerinden doğrulanmalıdır.*
 
 ## 4. Performans Değerlendirmesi
 
@@ -136,22 +134,8 @@ Modelin başarısı, nesne tespiti görevlerinde yaygın olarak kullanılan Prec
 
 **mAP@0.5:0.95:** IoU eşiğinin 0,50 ile 0,95 arasında 0,05 aralıklarla değiştirildiği değerlendirmelerdeki ortalama başarıyı ifade eder. Daha katı konumlandırma ölçütlerini de içerdiği için mAP@0.5 değerinden genellikle daha düşüktür.
 
-### 4.2. Doğrulama performansındaki değişim
 
-Aşağıdaki tablo, eğitim sürecinde belirli epoch noktalarında kaydedilen doğrulama metriklerini göstermektedir.
-
-| Epoch | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 |
-|---|---:|---:|---:|---:|
-| 1 | 0,392 | 0,192 | 0,176 | 0,0932 |
-| 4 | 0,548 | 0,499 | 0,525 | 0,3420 |
-| 8 | 0,714 | 0,593 | 0,674 | 0,4710 |
-| 10 | 0,704 | 0,647 | 0,704 | 0,5050 |
-| 15 | 0,773 | 0,720 | 0,787 | 0,5910 |
-| 20 | 0,821 | 0,735 | 0,815 | 0,6290 |
-
-Sonuçlar, eğitim ilerledikçe doğrulama performansının genel olarak yükseldiğini göstermektedir. Bununla birlikte, tek bir epoch'taki düşüş veya artış modelin genel başarısını tek başına belirlemez. Nihai değerlendirmede kayıp eğrileri ve diğer metrikler birlikte incelenmelidir.
-
-### 4.3. Bağımsız test kümesi sonuçları
+### 4.2. Bağımsız test kümesi sonuçları
 
 Eğitim ve model seçimi tamamlandıktan sonra en iyi doğrulama performansını veren ağırlıkların bağımsız test kümesi üzerindeki performansı değerlendirilmiştir.
 
@@ -168,7 +152,6 @@ Test sonuçları, modelin farklı nesne sınıflarını tespit edebildiğini gö
 
 6,55 ms/görüntü değeri yaklaşık 152 görüntü/saniye hızına karşılık gelir. Ancak bu dönüşüm yalnızca ölçülen süreye dayalı teorik bir hızdır. Gerçek zamanlı performans iddiası için ön işleme, veri aktarımı, son işleme ve donanım koşullarının da hesaba katılması gerekir.
 
-**Önemli:** Doğrulama ve test metrikleri birbirinden ayrı raporlanmalıdır. Test sonucunun doğrulama sonucuna yakın olması tek başına aşırı öğrenme olmadığını kanıtlamaz. Bunun için eğitim ve doğrulama kayıpları, metriklerin gelişimi ve veri ayrımının doğruluğu birlikte incelenmelidir.
 
 ### 4.4. Sınıf bazlı sonuçlar
 
@@ -189,7 +172,6 @@ Proje kayıtlarında bazı sınıflar için aşağıdaki mAP@0.5 değerleri bild
 
 Bu sonuçlar, bazı sınıflarda diğerlerine kıyasla daha yüksek başarı elde edildiğini göstermektedir. Küçük boyutlu, kısmen örtülen veya arka planla görsel açıdan benzerlik gösteren nesnelerde tespit daha zor olabilir.
 
-*Not: Sınıf bazlı değerlerin hangi değerlendirme kümesinden ve hangi çıktı dosyasından alındığı raporda belirtilmelidir.*
 
 ## 5. Gradio Tabanlı Web Uygulaması
 
@@ -232,24 +214,11 @@ Testlerde karşılaşılan temel sorunlar şunlardır:
 - **Küçük nesneler:** Görüntüde az sayıda piksel kaplayan nesnelerin ayırt edilmesi zorlaşabilir.
 - **Örtülme (occlusion):** Bir nesnenin başka bir nesne tarafından kısmen kapatılması, tespit başarısını düşürebilir.
 - **Düşük ışık:** Gece çekimlerinde ayrıntıların kaybolması ve görüntü gürültüsü tespitleri etkileyebilir.
-- **Yanlış sınıflandırma:** Karga örneğinde model, güven eşiği düşürüldüğünde nesneyi yanlışlıkla `sheep` sınıfıyla etiketlemiştir.
 
 Bu örnekler, yalnızca genel performans metriklerine bakmanın yeterli olmadığını; modelin hangi koşullarda hata yaptığının da incelenmesi gerektiğini göstermektedir.
 
 Gerçek dünya testleri, bağımsız test kümesi değerlendirmesinden ayrı bir nitel değerlendirme olarak ele alınmıştır. Bu fotoğraflardan elde edilen gözlemler, tek başına yeni bir genel doğruluk oranı hesaplamak için yeterli değildir.
 
-## 7. KVKK ve Görüntülerin Paylaşılması
-
-Proje kapsamında gerçek dünya görüntüleri kullanıldığı için kişisel verilerin korunmasına dikkat edilmelidir. Fotoğraflarda kişilerin belirlenebilir olması durumunda görüntüler kişisel veri içerebilir.
-
-Bu nedenle rapor ve GitHub deposu hazırlanırken şu noktalara dikkat edilmelidir:
-
-- Paylaşılması gerekmeyen kişisel görüntüler depodan çıkarılmalıdır.
-- Gerçek kişileri belirlenebilir kılan görüntüler yayımlanmadan önce uygunluk değerlendirmesi yapılmalıdır.
-- Görüntülerin yalnızca silinmesi değil, herkese açık Git geçmişinde veya başka kopyalarda kalıp kalmadığı da değerlendirilmelidir.
-- Paylaşılan ekran görüntülerinde kişisel veya hassas bilgiler bulunmamalıdır.
-
-Kişilerin bulanıklaştırılması riski azaltabilir ancak tek başına hukuki uygunluğu garanti etmez. Görüntülerin kaynağı, kullanım amacı ve paylaşım koşulları da dikkate alınmalıdır.
 
 ## 8. GitHub Depo İçeriği
 
@@ -263,22 +232,5 @@ Proje deposunda aşağıdaki dosyalar yer almaktadır:
 - **`BoxPR_curve.png`:** Precision-Recall eğrisi.
 - **`BoxF1_curve.png`:** F1 skorunun güven eşiğine göre değişimi.
 - **Örnek test çıktıları:** Modelin farklı görüntülerde ürettiği tespit sonuçları.
-
-Gerçek kişilere ait görüntüler, yayımlanmadan önce gizlilik ve paylaşım koşulları bakımından değerlendirilmelidir. Gereksiz kişisel veri içeren görsellerin GitHub deposunda tutulmaması tercih edilmiştir.
-
-## 9. Sonuç ve Gelecek Çalışmalar
-
-Bu projede PASCAL VOC veri seti kullanılarak YOLO11s tabanlı çok sınıflı bir nesne tespiti sistemi geliştirilmiş, modelin performansı çeşitli metriklerle değerlendirilmiş ve Gradio tabanlı bir web arayüzü hazırlanmıştır.
-
-Test sonuçlarında 0,8157 mAP@0.5 ve 0,6274 mAP@0.5:0.95 değerleri elde edildiği bildirilmiştir. Gerçek dünya görüntüleri üzerinde yapılan denemeler, modelin bazı koşullarda başarılı sonuçlar üretirken düşük ışık, yansıma, küçük nesneler ve kısmi örtülme gibi durumlarda zorlanabildiğini göstermiştir.
-
-Gelecekteki çalışmalar kapsamında şu geliştirmeler yapılabilir:
-
-- Farklı YOLO model boyutlarının aynı veri bölmesi ve değerlendirme ayarlarıyla karşılaştırılması.
-- Küçük nesneler ve düşük ışık koşulları için veri artırma yöntemlerinin incelenmesi.
-- Sınıf bazlı Precision, Recall ve mAP sonuçlarının ayrıntılı değerlendirilmesi.
-- Tahmin süresinin farklı görüntü boyutları ve donanımlarda karşılaştırılması.
-- Gradio arayüzünün kullanılabilirlik ve gizlilik açısından geliştirilmesi.
-
-Sonuç olarak proje, veri hazırlamadan model değerlendirmeye ve kullanıcı arayüzüne kadar nesne tespiti uygulamasının temel aşamalarını bir araya getirmektedir.
+  
 
