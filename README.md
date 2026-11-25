@@ -1,139 +1,284 @@
-# YOLO11s ile Çok Sınıflı Nesne Tespiti (PASCAL VOC)
+# YOLO11s ile PASCAL VOC Veri Seti Üzerinde Çok Sınıflı Nesne Tespiti
 
-Derin öğrenme dersi ödevi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirdim. Eğittiğim modeli eğitim sürecinde hiç görmediği bağımsız test verileriyle değerlendirdikten sonra, kullanıcıların kendi fotoğraflarını yükleyip anlık tespit alabilmesi için **Gradio** tabanlı etkileşimli bir web uygulamasına dönüştürdüm.
+## Proje Özeti
+
+Derin Öğrenme dersi kapsamında, açık kaynaklı PASCAL VOC veri setini kullanarak 20 farklı nesne sınıfını görüntüler üzerinde konumlarıyla birlikte tespit eden bir derin öğrenme modeli geliştirdim. YOLO11s mimarisiyle eğittiğim modeli doğrulama ve bağımsız test verileri üzerinde değerlendirdim. Ayrıca eğitilen modeli, kullanıcıların fotoğraf yükleyerek nesne tespiti yapabilmesini sağlayan Gradio tabanlı etkileşimli bir web uygulamasına entegre ettim.
+
+Proje kapsamında veri hazırlama, model eğitimi, performans değerlendirmesi, gerçek dünya görüntüleri üzerinde test ve kullanıcı arayüzü geliştirme aşamalarını gerçekleştirdim.
 
 ---
 
-## Proje Raporu Özeti
+## Proje Bilgileri
 
 | Alan | Açıklama |
-| :--- | :--- |
-| **Proje Başlığı** | YOLO11s ile PASCAL VOC Veri Seti Üzerinde Çok Sınıflı Nesne Tespiti |
-| **Problem Türü** | Nesne Tespiti (Object Detection — 20 Sınıf) |
-| **Veri Seti** | PASCAL VOC 2007 + 2012 Birleşik Veri Seti (Toplam 21.503 görüntü: 15.052 Eğitim, 3.225 Doğrulama, 3.226 Test) |
-| **Veri Seti Kaynağı** | http://host.robots.ox.ac.uk/pascal/VOC/ |
-| **Model Mimarisi** | YOLO11 |
-| **Giriş Görüntü Boyutu** | 640 × 640 piksel |
-| **Hiperparametreler** | 20 Epoch, Batch Size: 32, Başlangıç Öğrenme Oranı: 0.001, Early Stopping: 8 Epoch, Kayıt Periyodu: 5 Epoch |
-| **Optimizasyon Algoritması** | AdamW |
-| **Aktivasyon Fonksiyonları** | Gizli katmanlarda **SiLU**, sınıf olasılık çıkışlarında **Sigmoid** |
-| **Kayıp (Loss) Fonksiyonları** | **CIoU Loss** + **DFL** (kutu konumlandırma) ve **BCE Loss** (sınıflandırma) |
-| **Değerlendirme Metrikleri** | IoU, Precision, Recall, mAP@0.5, mAP@0.5:0.95, Eğitim Süresi, Tahmin Süresi (ms) |
-| **Eğitim Ortamı** | Google Colab — NVIDIA Tesla T4 GPU, PyTorch & Ultralytics |
-| **En İyi Test Performansı** | Test mAP@0.5: **0.8157**, mAP@0.5:0.95: **0.6274**, Precision: **0.8248**, Recall: **0.7373** *(Eğitim Süresi: 85.50 dk)* |
-| **Tahmin Hızı (Inference)** | **6.55 ms** / görüntü |
-| **Uygulama** | Gradio Web Arayüzü |
+|---|---|
+| Proje başlığı | YOLO11s ile PASCAL VOC Üzerinde Çok Sınıflı Nesne Tespiti |
+| Problem türü | Nesne tespiti (Object Detection) |
+| Veri seti | PASCAL VOC 2007 ve 2012 |
+| Toplam görüntü | 21.503 |
+| Eğitim / doğrulama / test | 15.052 / 3.225 / 3.226 |
+| Model mimarisi | YOLO11s |
+| Görüntü boyutu | 640 × 640 piksel |
+| Epoch sayısı | 20 |
+| Batch size | 32 |
+| Optimizasyon algoritması | AdamW |
+| Başlangıç öğrenme oranı | 0.001 |
+| Eğitim ortamı | Google Colab, NVIDIA Tesla T4 GPU |
+| Derin öğrenme kütüphaneleri | PyTorch, Ultralytics |
+| Arayüz | Gradio |
+| Eğitim süresi | 85,50 dakika |
+| Test mAP@0.5 | 0,8157 |
+| Test mAP@0.5:0.95 | 0,6274 |
+| Test Precision | 0,8248 |
+| Test Recall | 0,7373 |
+| Tahmin süresi | 6,55 ms/görüntü |
+
+*Not: Tablodaki veri sayıları ve performans değerleri proje kayıtlarından alınmıştır. Nihai raporda kullanılmadan önce eğitim günlükleri ve test çıktılarıyla doğrulanmalıdır.*
 
 ---
 
-## 1. Ödevin Amacı ve Seçilen Görev
+## 1. Ödevin Amacı ve Problem Tanımı
 
-Bu çalışmada, günlük yaşam sahnelerindeki birden fazla nesneyi hem sınıflandırabilen hem de görüntü üzerindeki koordinatlarını sınırlayıcı kutularla işaretleyebilen uçtan uca bir bilgisayarlı görü sistemi geliştirdim. Görüntü sınıflandırma yalnızca tek bir baskın etiketi verirken, **Nesne Tespiti (Object Detection)** yaklaşımı tek bir karedeki farklı boyut, açı ve konumlardaki çok sayıda nesneyi aynı anda tespit edebildiği için problem türü olarak bu görevi seçtim.
+Bu projenin amacı, günlük yaşam görüntülerinde bulunan birden fazla nesneyi aynı anda tespit edebilen bir bilgisayarlı görü sistemi geliştirmektir.
 
----
+Görüntü sınıflandırma, bir görüntünün hangi sınıfa ait olduğunu belirlemeye odaklanırken nesne tespiti, görüntüde bulunan nesnelerin sınıflarını ve konumlarını belirler. Bu nedenle proje kapsamında, aynı görüntüde farklı nesneleri tespit edebilen ve nesnelerin çevresine sınırlayıcı kutular (bounding boxes) çizebilen nesne tespiti problemi ele alınmıştır.
 
-## 2. Veri Seti ve Ön İşleme Süreci
+Projenin temel hedefleri şunlardır:
 
-Model eğitiminde nesne tespiti literatüründe standart ölçüt kabul edilen **PASCAL VOC 2007 ve 2012** birleşik veri setini kullandım. Veri seti toplam **21.503 görüntü** ve günlük hayattan **20 farklı nesne sınıfı** içermektedir:
-* **Taşıtlar:** Uçak (`aeroplane`), bisiklet (`bicycle`), tekne (`boat`), otobüs (`bus`), otomobil (`car`), motosiklet (`motorbike`), tren (`train`)
-* **Canlılar:** Kuş (`bird`), kedi (`cat`), inek (`cow`), köpek (`dog`), at (`horse`), insan (`person`), koyun (`sheep`)
-* **İç Mekân ve Günlük Nesneler:** Şişe (`bottle`), sandalye (`chair`), yemek masası (`diningtable`), saksı bitkisi (`pottedplant`), koltuk (`sofa`), televizyon (`tvmonitor`)
+- PASCAL VOC veri setini eğitim, doğrulama ve test kümelerine ayırmak.
+- YOLO11s mimarisiyle çok sınıflı nesne tespiti modeli geliştirmek.
+- Model performansını uygun değerlendirme metrikleriyle ölçmek.
+- Modelin farklı gerçek dünya koşullarındaki davranışını incelemek.
+- Eğitilen modeli kullanıcıların deneyebileceği bir Gradio arayüzüyle sunmak.
 
-### Ön İşleme ve Veri Sızıntısını (Data Leakage) Önleme Stratejisi
-* **Bağımsız Bölme Yapısı:** Aynı görüntünün eğitim ve test kümelerine birlikte düşerek yapay bir başarı skoru oluşturmasını (data leakage) önlemek amacıyla tüm görüntü-etiket çiftleri sabit bir rastgelelik tohumu (seed) ile karıştırılarak üç bağımsız kümeye ayrılmıştır:
-  * **Eğitim Kümesi (Train — %70):** 15.052 görüntü
-  * **Doğrulama Kümesi (Validation — %15):** 3.225 görüntü
-  * **Test Kümesi (Test — %15):** 3.226 görüntü
+## 2. Veri Seti ve Ön İşleme
 
----
+### 2.1. PASCAL VOC veri seti
 
-## 3. Model Mimarisi ve Hiperparametre Gerekçeleri
+Modelin eğitiminde PASCAL VOC 2007 ve PASCAL VOC 2012 veri setleri kullanılmıştır. Veri seti, farklı ortam ve koşullarda çekilmiş görüntülerde nesne sınıflarını ve konumlarını belirlemek amacıyla hazırlanmıştır.
 
-Mimari olarak tek aşamalı (one-stage) çalışan güncel **YOLO11s** modelini tercih ettim. `Small` (`s`) ölçeğini seçmemin temel nedeni, Google Colab T4 GPU donanımında makul bir sürede eğitilebilmesi ve gerçek zamanlı çıkarım hızında yüksek doğruluk sunmasıdır.
+Projede kullanılan 20 sınıf aşağıdaki gruplarda ele alınmıştır:
 
-### Seçilen Ayarlar ve Teknik Gerekçeleri
-* **Epoch Sayısı (20) ve Erken Durdurma (Patience = 8):** 15.052 eğitim görüntüsünde ağırlıkların yeterince yakınsayabilmesi için 20 epoch belirledim. Doğrulama başarısı art arda 8 epoch boyunca gelişmezse aşırı öğrenmeyi (overfitting) önlemek amacıyla eğitimi otomatik durduracak erken durdurma mekanizmasını aktif ettim.
-* **Yığın Boyutu (Batch Size = 32) ve Bellek Yönetimi:** T4 GPU'nun 15 GB VRAM kapasitesini verimli kullanmak için yığın boyutunu 32 seçtim. Google Colab oturumunun 12.7 GB sistem RAM sınırını aşarak oturumun çökmesini engellemek için görüntüleri RAM'e önbellekleme özelliğini kapalı tuttum.
-* **Optimizasyon ve Öğrenme Oranı (AdamW, lr0 = 0.001):** Ön eğitimli temel görsel özellikleri bozmadan PASCAL VOC sınıflarına hassas ince ayar (fine-tuning) yapabilmek için ağırlık çürümesi destekli **AdamW** optimizasyonunu ve `0.001` başlangıç öğrenme oranını kullandım.
-* **Aktivasyon ve Kayıp Fonksiyonları:** Ağın gizli katmanlarında gradyan akışını koruyan **SiLU**, çıkış katmanında ise çoklu sınıf olasılıklarını bağımsız hesaplayan **Sigmoid** aktivasyon fonksiyonu kullanılmıştır. Kayıp fonksiyonu olarak kutu konumlandırma örtüşmesini iyileştiren **CIoU + DFL** ve sınıf ayrımını ölçen **BCE (Binary Cross-Entropy)** birlikte çalışmaktadır.
+- **Taşıtlar:** Uçak (`aeroplane`), bisiklet (`bicycle`), tekne (`boat`), otobüs (`bus`), otomobil (`car`), motosiklet (`motorbike`) ve tren (`train`).
+- **Canlılar:** Kuş (`bird`), kedi (`cat`), inek (`cow`), köpek (`dog`), at (`horse`), insan (`person`) ve koyun (`sheep`).
+- **Günlük yaşam nesneleri:** Şişe (`bottle`), sandalye (`chair`), yemek masası (`diningtable`), saksı bitkisi (`pottedplant`), koltuk (`sofa`) ve televizyon (`tvmonitor`).
 
----
+### 2.2. Veri kümelerinin oluşturulması
 
-## 4. Performans Değerlendirmesi ve Metrik Analizi
+Veri seti, eğitim sürecinde kullanılacak görüntüler ile modelin değerlendirilmesinde kullanılacak görüntüleri birbirinden ayırmak amacıyla üç kümeye bölünmüştür.
 
-### Kullanılan Metriklerin Anlamı
-* **IoU (Intersection over Union):** Modelin çizdiği tahmin kutusu ile gerçek etiket kutusunun kesişim alanının birleşim alanına oranıdır.
-* **Precision (Kesinlik):** Modelin "nesne var" diyerek işaretlediği kutuların yüzde kaçının gerçekten doğru olduğunu gösterir.
-* **Recall (Duyarlılık):** Görüntüdeki gerçek nesnelerin yüzde kaçının model tarafından kaçırılmadan yakalandığını ölçer.
-* **mAP@0.5:** En az %50 IoU örtüşme eşiğinde 20 sınıfın ortalama doğruluk (Average Precision) değeridir.
-* **mAP@0.5:0.95:** IoU eşiği %50'den %95'e kadar 0.05 adımlarla artırılırken hesaplanan daha katı ve hassas ortalama başarı skorudur.
+| Küme | Görüntü sayısı | Oran |
+|---|---:|---:|
+| Eğitim (Train) | 15.052 | %70 |
+| Doğrulama (Validation) | 3.225 | %15 |
+| Test (Test) | 3.226 | %15 |
+| **Toplam** | **21.503** | **%100** |
 
-### Eğitim Süreci Doğrulama (Validation) Gelişimi
-20 epoch boyunca 3.225 doğrulama görüntüsü üzerinde kaydedilen ilerleme, modelin düzenli olarak öğrendiğini göstermektedir:
+Veri bölme işleminde sabit bir rastgelelik tohumu kullanılarak tekrarlanabilirlik hedeflenmiştir. Görüntü ve etiket eşleşmelerinin korunmasına dikkat edilmiştir.
 
-| Epoch | Precision (P) | Recall (R) | mAP@0.5 | mAP@0.5:0.95 |
-| :--- | :---: | :---: | :---: | :---: |
-| **1 / 20** | 0.392 | 0.192 | 0.176 | 0.0932 |
-| **4 / 20** | 0.548 | 0.499 | 0.525 | 0.3420 |
-| **8 / 20** | 0.714 | 0.593 | 0.674 | 0.4710 |
-| **10 / 20** | 0.704 | 0.647 | 0.704 | 0.5050 |
-| **15 / 20** | 0.773 | 0.720 | 0.787 | 0.5910 |
-| **20 / 20 (Final)** | **0.821** | **0.735** | **0.815** | **0.6290** |
+Test kümesi, eğitim sırasında ağırlık güncellemek veya hiperparametre seçmek için kullanılmamalıdır. Nihai performans, model ve ayarlar belirlendikten sonra bu küme üzerinde ölçülmelidir. Aynı görüntülerin farklı kümelerde bulunması ve yinelenen görüntüler gibi olası veri sızıntısı kaynakları da kontrol edilmelidir.
 
-### Bağımsız Test Kümesi Sonuçları
-Eğitim tamamlandıktan sonra en yüksek doğrulama skorunu veren model ağırlıkları yüklenerek, eğitimde hiç görülmemiş **3.226 adet test görüntüsü** (toplam 7.752 nesne örneği) değerlendirilmiştir:
+## 3. Model Mimarisi ve Eğitim Ayarları
 
-* **Toplam Eğitim Süresi:** `85.50` dakika (`1.407` saat)
-* **Test mAP@0.5:** `0.8157`
-* **Test mAP@0.5:0.95:** `0.6274`
-* **Test Precision:** `0.8248`
-* **Test Recall:** `0.7373`
-* **Tahmin Süresi (Inference Time):** `6.55 ms` / görüntü (~152 FPS)
+### 3.1. YOLO11s mimarisinin seçilmesi
 
-### Bulguların Teknik Yorumu
-* **Genelleme Başarısı:** Doğrulama kümesinde `0.8150` olan mAP@0.5 skorunun, tamamen bağımsız test kümesinde `0.8157` olarak gerçekleşmesi modelde **aşırı öğrenme (overfitting) yaşanmadığını** ve genelleme kapasitesinin yüksek olduğunu kanıtlamaktadır.
-* **Sınıf Bazlı Başarı Farkları:** Belirgin hatlara ve büyük ölçeğe sahip sınıflarda (`bus`: 0.935, `horse`: 0.920, `car`: 0.899, `person`: 0.894, `aeroplane`: 0.880, `cat`: 0.879) oldukça yüksek doğruluk elde edilmiştir. Buna karşın küçük boyutlu, arka planla iç içe geçen ve birbirini kısmen kapatan nesnelerde (`chair`: 0.624, `pottedplant`: 0.663, `boat`: 0.697, `bottle`: 0.701) başarının görece düştüğü gözlemlenmiştir.
+Projede tek aşamalı nesne tespiti yaklaşımını kullanan YOLO11s modeli tercih edilmiştir. Tek aşamalı modeller, nesnelerin sınıflarını ve konumlarını aynı tahmin süreci içerisinde belirlemeyi amaçlar.
 
----
+YOLO11s modelinin seçilmesindeki temel gerekçe, nesne tespiti başarısı ile hesaplama maliyeti arasında dengeli bir seçenek sunmasıdır. Google Colab üzerindeki NVIDIA Tesla T4 GPU kullanılarak modelin eğitilmesi ve değerlendirilmesi hedeflenmiştir.
 
-## 5. Uygulama (Deployment) — Gradio Web Arayüzü
+### 3.2. Eğitim hiperparametreleri
 
-Eğitilen modeli son kullanıcıların kolayca test edebileceği etkileşimli bir web uygulamasına dönüştürmek için **Gradio** arayüzü tasarladım. Uygulamanın çalışma akışı şu adımlardan oluşur:
+| Parametre | Değer |
+|---|---|
+| Model | YOLO11s |
+| Giriş görüntü boyutu | 640 × 640 |
+| Epoch sayısı | 20 |
+| Batch size | 32 |
+| Başlangıç öğrenme oranı | 0.001 |
+| Optimizasyon algoritması | AdamW |
+| Early stopping patience | 8 |
+| Kayıt periyodu | 5 epoch |
+| Donanım | NVIDIA Tesla T4 GPU |
 
-1. **Görüntü Yükleme:** Kullanıcı web arayüzü üzerinden kendi cihazındaki herhangi bir fotoğrafı sisteme yükler.
-2. **Dinamik Güven Eşiği (Confidence Threshold):** Kullanıcı arayüzdeki kaydırıcı (slider) yardımıyla `0.10` ile `0.90` arasında bir güven eşiği seçebilir (varsayılan değer `0.40`). Eşik düşürüldüğünde daha fazla aday nesne yakalanırken yanlış pozitif riski artar; eşik yükseltildiğinde yalnızca yüksek kesinlikli tahminler gösterilir.
-3. **Görsel ve Metinsel Çıktı:** Model görüntüyü 640×640 boyutunda işleyerek tespit ettiği nesnelerin etrafına sınırlayıcı kutular çizer, renk uzayı dönüşümünü yaparak işlenmiş görüntüyü ekrana yansıtır ve sağ panelde tespit edilen sınıfları yüzdelik güven skorlarıyla birlikte listeler.
+**Epoch sayısı ve erken durdurma:** Eğitim için 20 epoch belirlenmiştir. Doğrulama performansı belirli bir süre boyunca iyileşmezse erken durdurma mekanizmasının eğitimi sonlandırması amaçlanmıştır. `patience=8` ayarı, en iyi doğrulama sonucundan sonra sekiz epoch boyunca iyileşme olmaması durumunda eğitimin durdurulmasını sağlar.
 
----
+**Batch size ve bellek yönetimi:** Batch size değeri 32 olarak belirlenmiştir. Bu ayar, her ağırlık güncellemesinde kullanılan görüntü sayısını belirler. Gerçek bellek tüketimi görüntü boyutuna, model yapısına ve veri yükleme ayarlarına bağlıdır.
 
-## 6. Gerçek Görüntülerle Test ve Hata Analizi
+**Optimizasyon:** AdamW, model ağırlıklarını kayıp fonksiyonuna göre güncellemek için kullanılmıştır. Başlangıç öğrenme oranı 0.001 olarak ayarlanmıştır.
 
-Modelin veri seti dışındaki gerçek dünya koşullarındaki performansını ve sınırlarını ölçmek amacıyla farklı ışık, yansıma, açı ve kapanma (occlusion) koşullarında kendi çektiğim fotoğrafları Gradio web arayüzünde test ettim:
+### 3.3. Aktivasyon ve kayıp fonksiyonları
 
-| Fotoğraf | Çekim Koşulu | Gerçekteki Nesneler | Modelin Tahmini ve Gözlem | Durum |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. Durak Camı Yansıması (`01.jpg`)** | Gün ışığı, cam yüzey yansıması ve arka plan örtüşmesi | İnsan (`person`), Otomobiller (`car`) | Yansımadaki kişi ve arka plandaki araçlar tespit edildi; cam yansıması nedeniyle güven skorları görece düşük kaldı | Kısmen Başarılı |
-| **2. Gündüz Trafik (`13.jpg`)** | Gün ışığı, çoklu araç | Otomobiller (`car`) | Ön ve orta plandaki otomobiller yüksek güven skorlarıyla doğru işaretlendi | Başarılı |
-| **3. Sahil ve Vapur (`03.jpg`)** | Gün ışığı, çoklu insan ve deniz aracı | İnsanlar (`person`), Vapur (`boat`) | Sahil hattındaki yayalar ve deniz üzerindeki vapur doğru sınıflandırıldı | Başarılı |
-| **4. Havalimanı Apronu (`06.jpg`)** | Gün ışığı, uzak uçak ve yakın kanat | Uçak (`aeroplane`), Araç (`car`) | Aprondaki uçak ve yer hizmet aracı tespit edildi; aşırı uzak nesneler eşik altında kaldı | Başarılı / Kısmi |
-| **5. Sahil Masa Düzeni (`10.jpg`)** | Alacakaranlık, ağaç arkası kapanma | Masa (`diningtable`), Sandalye (`chair`), İnsan (`person`) | Açıkta kalan masa ve sandalyeler yakalandı; ağaç gövdesi arkasında kalan kişiler kısmen kaçırıldı | Kısmen Başarılı |
-| **6. Gece Motosiklet (`08.jpg`)** | Gece yapay ışık, ön tekerde duba engeli | Motosiklet (`motorbike`) | Yapay sokak aydınlatması altında motosiklet yüksek doğrulukla tespit edildi | Başarılı |
-| **7. Asfalt Üzerinde Karga (`17.jpg`)** | Tepeden bakış açısı, düşük kontrastlı gri zemin | Kuş (`bird`) | Varsayılan `0.40` eşiğinde tespit yok; eşik düşürüldüğünde `sheep` (Yanlış Pozitif) olarak etiketlendi | Başarısız (Hata Analizi) |
-| **8. Gece Meydan (`gece_meydan.jpg`)** | Gece ışığı, hareket bulanıklığı ve kalabalık | İnsanlar (`person`), Polis Aracı (`car`) | Sabit duran kişiler ve araç tespit edildi; hareket bulanıklığı olan uzak hedeflerde güven skoru düştü | Zorlandı / Kısmi |
+YOLO11s mimarisinde kullanılan temel bileşenler şunlardır:
 
-### Başarılı ve Başarısız Durumların Değerlendirmesi
-* **Başarılı Olduğu Durumlar:** Gün ışığında çekilen, arka plandan net biçimde ayrışan ve kadraja tam giren otomobil, uçak, motosiklet ve yürüyen insan örneklerinde model yüksek güven skorlarıyla doğru sınırlayıcı kutular çizmiştir.
-* **Zorlandığı / Başarısız Olduğu Durumlar:**
-  * **Cam Yansıması ve Yarı Saydamlık (`01.jpg`):** Durak camındaki yansıma görüntüsü ile camın arkasından geçen araçların aynı piksel bölgesinde çakışması kontrast kaybına yol açarak güven skorlarını düşürmüştür.
-  * **Tepeden Açı ve Doku Benzerliği (`17.jpg`):** Asfalt zemin üzerindeki karga fotoğrafında varsayılan `0.40` eşiğinde nesne yakalanamamış; eşik düşürüldüğünde ise üstten çekim silüeti ve gri tüy-asfalt dokusu benzerliği nedeniyle model nesneyi yanlış pozitif (false positive) olarak `sheep` (koyun) sınıfına atamıştır.
-  * **Düşük Işık, Kapanma ve Hareket Bulanıklığı (`10.jpg`, `gece_meydan.jpg`):** Alacakaranlıkta ağaç gövdesi arkasında kısmen gizlenen kişilerde (occlusion) ve gece hareket bulanıklığı (motion blur) oluşan karelerde tespit doğruluğunun azaldığı gözlemlenmiştir.
+- **SiLU aktivasyonu:** Ağın ilgili katmanlarında doğrusal olmayan özellik dönüşümlerini sağlar.
+- **Sigmoid aktivasyonu:** Uygun çıkışlarda bağımsız olasılık tahminleri üretmek için kullanılır.
+- **CIoU Loss:** Tahmin kutusu ile gerçek kutu arasındaki örtüşme ve geometrik farklılıkları değerlendirir.
+- **DFL (Distribution Focal Loss):** Sınırlayıcı kutu koordinatlarının tahmin edilmesinde kullanılan kayıp bileşenidir.
+- **BCE (Binary Cross-Entropy):** İlgili sınıflandırma tahminlerinin hata değerini hesaplamak için kullanılır.
 
----
+Bu bileşenler birlikte, nesne konumlarının ve sınıflandırma sonuçlarının iyileştirilmesine katkı sağlar.
 
-## 7. Depo (Repository) İçeriği
+*Not: Bu bölümdeki optimizer, öğrenme oranı, kayıp bileşenleri ve ağırlık başlatma yöntemi, kullanılan Ultralytics sürümü ve gerçek eğitim yapılandırması üzerinden doğrulanmalıdır.*
 
-* **Kod Defteri (`YOLO11_Object_Detection.ipynb`):** Veri hazırlama, model eğitimi, bağımsız test değerlendirmesi ve Gradio web arayüzünün tüm kaynak kodları ile çalışma çıktıları.
-* **Yapılandırma Dosyası (`voc_custom.yaml`):** Veri seti dizin yolları ve 20 nesne sınıfının tanımı.
-* **Eğitilmiş Model Ağırlıkları (`best.pt`):** Eğitim boyunca en yüksek doğrulama skorunu elde eden nihai model dosyası (19.2 MB).
-* **Performans Grafikleri (`results.png`, `confusion_matrix.png`, `BoxPR_curve.png`, `BoxF1_curve.png`):** Eğitim/doğrulama kayıp eğrileri, 20 sınıf karmaşıklık matrisi, Precision-Recall ve F1 eğrileri.
-* **Gerçek Dünya Test Çıktıları:** Gradio web arayüzü üzerinden test edilen gerçek fotoğrafların tespit görselleri.
+## 4. Performans Değerlendirmesi
+
+Modelin başarısı, nesne tespiti görevlerinde yaygın olarak kullanılan Precision, Recall, IoU ve mAP metrikleriyle değerlendirilmiştir.
+
+### 4.1. Değerlendirme metrikleri
+
+**IoU (Intersection over Union):** Tahmin edilen sınırlayıcı kutu ile gerçek etiket kutusunun kesişim alanının birleşim alanına oranıdır. Kutuların konumsal örtüşmesini ölçer.
+
+**Precision (Kesinlik):** Modelin doğru olarak değerlendirdiği pozitif tespitlerin, tüm pozitif tespitlere oranını ifade eder. Yanlış pozitif tespitlerin etkisini değerlendirmede kullanılır.
+
+**Recall (Duyarlılık):** Gerçek nesnelerin ne kadarının model tarafından tespit edildiğini gösterir. Kaçırılan nesnelerin değerlendirilmesine yardımcı olur.
+
+**mAP@0.5:** IoU eşiği 0,50 kabul edilerek sınıflar için hesaplanan Average Precision değerlerinin ortalamasıdır.
+
+**mAP@0.5:0.95:** IoU eşiğinin 0,50 ile 0,95 arasında 0,05 aralıklarla değiştirildiği değerlendirmelerdeki ortalama başarıyı ifade eder. Daha katı konumlandırma ölçütlerini de içerdiği için mAP@0.5 değerinden genellikle daha düşüktür.
+
+### 4.2. Doğrulama performansındaki değişim
+
+Aşağıdaki tablo, eğitim sürecinde belirli epoch noktalarında kaydedilen doğrulama metriklerini göstermektedir.
+
+| Epoch | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 |
+|---|---:|---:|---:|---:|
+| 1 | 0,392 | 0,192 | 0,176 | 0,0932 |
+| 4 | 0,548 | 0,499 | 0,525 | 0,3420 |
+| 8 | 0,714 | 0,593 | 0,674 | 0,4710 |
+| 10 | 0,704 | 0,647 | 0,704 | 0,5050 |
+| 15 | 0,773 | 0,720 | 0,787 | 0,5910 |
+| 20 | 0,821 | 0,735 | 0,815 | 0,6290 |
+
+Sonuçlar, eğitim ilerledikçe doğrulama performansının genel olarak yükseldiğini göstermektedir. Bununla birlikte, tek bir epoch'taki düşüş veya artış modelin genel başarısını tek başına belirlemez. Nihai değerlendirmede kayıp eğrileri ve diğer metrikler birlikte incelenmelidir.
+
+### 4.3. Bağımsız test kümesi sonuçları
+
+Eğitim ve model seçimi tamamlandıktan sonra en iyi doğrulama performansını veren ağırlıkların bağımsız test kümesi üzerindeki performansı değerlendirilmiştir.
+
+| Metrik | Test sonucu |
+|---|---:|
+| mAP@0.5 | 0,8157 |
+| mAP@0.5:0.95 | 0,6274 |
+| Precision | 0,8248 |
+| Recall | 0,7373 |
+| Eğitim süresi | 85,50 dakika |
+| Görüntü başına tahmin süresi | 6,55 ms |
+
+Test sonuçları, modelin farklı nesne sınıflarını tespit edebildiğini göstermektedir. Precision değerinin Recall değerinden yüksek olması, kullanılan değerlendirme ayarlarında doğru pozitif tespitlerin oranının, yakalanan gerçek nesnelerin oranına kıyasla daha yüksek olduğunu göstermektedir.
+
+6,55 ms/görüntü değeri yaklaşık 152 görüntü/saniye hızına karşılık gelir. Ancak bu dönüşüm yalnızca ölçülen süreye dayalı teorik bir hızdır. Gerçek zamanlı performans iddiası için ön işleme, veri aktarımı, son işleme ve donanım koşullarının da hesaba katılması gerekir.
+
+**Önemli:** Doğrulama ve test metrikleri birbirinden ayrı raporlanmalıdır. Test sonucunun doğrulama sonucuna yakın olması tek başına aşırı öğrenme olmadığını kanıtlamaz. Bunun için eğitim ve doğrulama kayıpları, metriklerin gelişimi ve veri ayrımının doğruluğu birlikte incelenmelidir.
+
+### 4.4. Sınıf bazlı sonuçlar
+
+Proje kayıtlarında bazı sınıflar için aşağıdaki mAP@0.5 değerleri bildirilmiştir:
+
+| Sınıf | Bildirilen mAP@0.5 |
+|---|---:|
+| Otobüs (`bus`) | 0,935 |
+| At (`horse`) | 0,920 |
+| Otomobil (`car`) | 0,899 |
+| İnsan (`person`) | 0,894 |
+| Uçak (`aeroplane`) | 0,880 |
+| Kedi (`cat`) | 0,879 |
+| Sandalye (`chair`) | 0,624 |
+| Saksı bitkisi (`pottedplant`) | 0,663 |
+| Tekne (`boat`) | 0,697 |
+| Şişe (`bottle`) | 0,701 |
+
+Bu sonuçlar, bazı sınıflarda diğerlerine kıyasla daha yüksek başarı elde edildiğini göstermektedir. Küçük boyutlu, kısmen örtülen veya arka planla görsel açıdan benzerlik gösteren nesnelerde tespit daha zor olabilir.
+
+*Not: Sınıf bazlı değerlerin hangi değerlendirme kümesinden ve hangi çıktı dosyasından alındığı raporda belirtilmelidir.*
+
+## 5. Gradio Tabanlı Web Uygulaması
+
+Eğitilen model, kullanıcıların kendi görüntülerini yükleyerek nesne tespiti gerçekleştirebilmeleri için Gradio tabanlı bir web arayüzüne entegre edilmiştir.
+
+Uygulamanın çalışma akışı üç temel adımdan oluşmaktadır:
+
+1. **Görüntü yükleme:** Kullanıcı arayüz üzerinden bir fotoğraf seçer.
+2. **Nesne tespiti:** YOLO11s modeli görüntüyü işler ve belirlenen güven eşiğine uygun tespitleri üretir.
+3. **Sonuçları gösterme:** Tespit edilen nesneler görüntü üzerinde sınırlayıcı kutularla işaretlenir. Sınıf isimleri ve güven skorları metin alanında gösterilir.
+
+Arayüzdeki güven eşiği 0,10 ile 0,90 arasında ayarlanabilir. Daha düşük eşikler daha fazla tespitin gösterilmesine olanak tanırken yanlış pozitiflerin sayısını artırabilir. Daha yüksek eşikler ise düşük güvenli tespitleri eler ve bazı gerçek nesnelerin sonuçlarda görünmemesine neden olabilir.
+
+Bu arayüz, modelin kullanıcı açısından erişilebilir hâle getirilmesini ve farklı görüntüler üzerinde deneysel olarak test edilmesini sağlamaktadır.
+
+## 6. Gerçek Dünya Görüntüleriyle Test ve Hata Analizi
+
+Modelin eğitim veri seti dışındaki görüntülerde nasıl davrandığını incelemek amacıyla farklı ışık, açı, yansıma ve örtülme koşullarında fotoğraf testleri gerçekleştirilmiştir.
+
+| Test görüntüsü | Koşullar | Gözlemlenen sonuç |
+|---|---|---|
+| Durak camı yansıması (`01.jpg`) | Cam yansıması, arka plan örtüşmesi | İnsan ve otomobil tespitleri elde edilmiştir. Yansıma koşullarında bazı güven skorları düşük kalmıştır. |
+| Gündüz trafik (`13.jpg`) | Gün ışığı, birden fazla araç | Görüntüdeki bazı otomobiller yüksek güven skorlarıyla tespit edilmiştir. |
+| Sahil ve vapur (`03.jpg`) | Açık hava, insanlar ve deniz aracı | İnsanlar ve vapur için tespitler elde edilmiştir. |
+| Havalimanı apronu (`06.jpg`) | Uzak nesneler, farklı nesne boyutları | Uçak ve yer hizmet aracı için tespitler elde edilmiştir; uzak nesnelerde performans değişmiştir. |
+| Sahil masa düzeni (`10.jpg`) | Alacakaranlık, kısmi örtülme | Masa ve sandalyeler tespit edilmiş, örtülen bazı kişiler kaçırılmıştır. |
+| Gece motosiklet (`08.jpg`) | Yapay ışık, engel | Motosiklet tespit edilmiştir. |
+| Asfalt üzerinde karga (`17.jpg`) | Tepeden bakış, düşük kontrast | Varsayılan eşikte tespit elde edilememiş; eşik düşürüldüğünde yanlış sınıflandırma görülmüştür. |
+| Gece meydan (`gece_meydan.jpg`) | Düşük ışık, kalabalık, hareket bulanıklığı | Bazı insanlar ve araçlar tespit edilmiş; uzak veya bulanık nesnelerde başarı düşmüştür. |
+
+### 6.1. Başarılı sonuçların değerlendirilmesi
+
+Görüntülerde arka plandan belirgin biçimde ayrılan ve yeterli boyutta görünen bazı nesneler başarılı şekilde tespit edilmiştir. Bu durum, modelin eğitim sırasında öğrendiği görsel özellikleri farklı görüntülere uygulayabildiğini göstermektedir.
+
+### 6.2. Hatalı sonuçların değerlendirilmesi
+
+Testlerde karşılaşılan temel sorunlar şunlardır:
+
+- **Yansıma:** Cam yüzeylerde oluşan yansımalar, nesnelerin görünümünü değiştirebilir ve modelin güven skorlarını etkileyebilir.
+- **Küçük nesneler:** Görüntüde az sayıda piksel kaplayan nesnelerin ayırt edilmesi zorlaşabilir.
+- **Örtülme (occlusion):** Bir nesnenin başka bir nesne tarafından kısmen kapatılması, tespit başarısını düşürebilir.
+- **Düşük ışık:** Gece çekimlerinde ayrıntıların kaybolması ve görüntü gürültüsü tespitleri etkileyebilir.
+- **Yanlış sınıflandırma:** Karga örneğinde model, güven eşiği düşürüldüğünde nesneyi yanlışlıkla `sheep` sınıfıyla etiketlemiştir.
+
+Bu örnekler, yalnızca genel performans metriklerine bakmanın yeterli olmadığını; modelin hangi koşullarda hata yaptığının da incelenmesi gerektiğini göstermektedir.
+
+Gerçek dünya testleri, bağımsız test kümesi değerlendirmesinden ayrı bir nitel değerlendirme olarak ele alınmıştır. Bu fotoğraflardan elde edilen gözlemler, tek başına yeni bir genel doğruluk oranı hesaplamak için yeterli değildir.
+
+## 7. KVKK ve Görüntülerin Paylaşılması
+
+Proje kapsamında gerçek dünya görüntüleri kullanıldığı için kişisel verilerin korunmasına dikkat edilmelidir. Fotoğraflarda kişilerin belirlenebilir olması durumunda görüntüler kişisel veri içerebilir.
+
+Bu nedenle rapor ve GitHub deposu hazırlanırken şu noktalara dikkat edilmelidir:
+
+- Paylaşılması gerekmeyen kişisel görüntüler depodan çıkarılmalıdır.
+- Gerçek kişileri belirlenebilir kılan görüntüler yayımlanmadan önce uygunluk değerlendirmesi yapılmalıdır.
+- Görüntülerin yalnızca silinmesi değil, herkese açık Git geçmişinde veya başka kopyalarda kalıp kalmadığı da değerlendirilmelidir.
+- Paylaşılan ekran görüntülerinde kişisel veya hassas bilgiler bulunmamalıdır.
+
+Kişilerin bulanıklaştırılması riski azaltabilir ancak tek başına hukuki uygunluğu garanti etmez. Görüntülerin kaynağı, kullanım amacı ve paylaşım koşulları da dikkate alınmalıdır.
+
+## 8. GitHub Depo İçeriği
+
+Proje deposunda aşağıdaki dosyalar yer almaktadır:
+
+- **`YOLO11_Object_Detection.ipynb`:** Veri hazırlama, eğitim, değerlendirme ve Gradio arayüzü için kullanılan Jupyter Notebook.
+- **`voc_custom.yaml`:** Veri seti yolları ve 20 sınıfa ilişkin yapılandırma.
+- **`best.pt`:** Eğitim sırasında en iyi doğrulama performansını veren model ağırlıkları.
+- **`results.png`:** Eğitim ve doğrulama metriklerinin grafiksel gösterimi.
+- **`confusion_matrix.png`:** Sınıflandırma hatalarının sınıflara göre dağılımı.
+- **`BoxPR_curve.png`:** Precision-Recall eğrisi.
+- **`BoxF1_curve.png`:** F1 skorunun güven eşiğine göre değişimi.
+- **Örnek test çıktıları:** Modelin farklı görüntülerde ürettiği tespit sonuçları.
+
+Gerçek kişilere ait görüntüler, yayımlanmadan önce gizlilik ve paylaşım koşulları bakımından değerlendirilmelidir. Gereksiz kişisel veri içeren görsellerin GitHub deposunda tutulmaması tercih edilmiştir.
+
+## 9. Sonuç ve Gelecek Çalışmalar
+
+Bu projede PASCAL VOC veri seti kullanılarak YOLO11s tabanlı çok sınıflı bir nesne tespiti sistemi geliştirilmiş, modelin performansı çeşitli metriklerle değerlendirilmiş ve Gradio tabanlı bir web arayüzü hazırlanmıştır.
+
+Test sonuçlarında 0,8157 mAP@0.5 ve 0,6274 mAP@0.5:0.95 değerleri elde edildiği bildirilmiştir. Gerçek dünya görüntüleri üzerinde yapılan denemeler, modelin bazı koşullarda başarılı sonuçlar üretirken düşük ışık, yansıma, küçük nesneler ve kısmi örtülme gibi durumlarda zorlanabildiğini göstermiştir.
+
+Gelecekteki çalışmalar kapsamında şu geliştirmeler yapılabilir:
+
+- Farklı YOLO model boyutlarının aynı veri bölmesi ve değerlendirme ayarlarıyla karşılaştırılması.
+- Küçük nesneler ve düşük ışık koşulları için veri artırma yöntemlerinin incelenmesi.
+- Sınıf bazlı Precision, Recall ve mAP sonuçlarının ayrıntılı değerlendirilmesi.
+- Tahmin süresinin farklı görüntü boyutları ve donanımlarda karşılaştırılması.
+- Gradio arayüzünün kullanılabilirlik ve gizlilik açısından geliştirilmesi.
+
+Sonuç olarak proje, veri hazırlamadan model değerlendirmeye ve kullanıcı arayüzüne kadar nesne tespiti uygulamasının temel aşamalarını bir araya getirmektedir.
+
